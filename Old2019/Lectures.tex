@@ -1,0 +1,845 @@
+\documentclass[11pt]{article} % Font size (can be 10pt, 11pt or 12pt) and paper size (remove a4paper for US letter paper)
+
+\usepackage{amsmath,amssymb,amsthm,gensymb}
+
+\usepackage{geometry}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage[protrusion=true,expansion=true]{microtype} % Better typography
+\usepackage{graphicx} % Required for including pictures
+\usepackage{wrapfig} % Allows in-line images
+\linespread{1.12}
+\usepackage{mathtools}
+\usepackage[font=footnotesize,labelfont=bf]{caption}
+\usepackage[T1]{fontenc} % Required for accented characters
+
+\makeatletter
+
+\newcommand{\bra}[1]{\left\langle #1 \right|}
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\braket}[2]{\left\langle#1 |  #2\right\rangle}
+\makeatother
+
+%\addbibresource{bibliography.bib}
+
+
+\author{Amir Karamlou, Francisca Vasconcelos, and Megan Yamoah}
+\title{Introduction to Quantum Computing\\Lecture Notes}
+\date{Massachusetts Institute of Technology\\6.s089 IAP 2019}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+This course, taught during the MIT January term over 11 classes of two hours each, aims to serve as a general introduction to the field of quantum computing. It is tailored to the motivated underclass undergraduate and assumes no background in either quantum mechanics or classical computing theory, though it is built on many of the simpler concepts in linear algebra. As such, the course begins with a general introduction to quantum mechanics, followed by a study of the formalism used in the quantum computing field. Then, we will cover fundamental quantum algorithms and their applications before diving into more complex topics such as quantum machine learning and the operational methods of currently researched quantum computing architectures.
+
+These notes cover all topics presented in the lectures and cite applicable references in the field for the interested reader. By no means are they a fully comprehensive introduction to quantum computing, but they should, at minimum, lay a foundation for further investigation into the topic.
+
+\section{Introduction to Quantum Mechanics}
+
+Quantum mechanics is, in short, the theory which describes the workings of the entire universe but which only manifests itself in certain regimes where ``classical" effects do not take over (namely at small lengths, low temperatures, low energies, high pressures, etc.). It presents various un-intuitive ideas as demonstrated by the Heisenberg Uncertainty Principle and Schr\"odinger's cat. Yet, it describes with perfect accuracy numerous phenomena we experimentally observe at the microscopic level. Add to this the fact that we have yet to fully prove quantum mechanics, and one seriously doubts our current knowledge of the universe.
+
+Clearly, quantum mechanics is not a trivial subject. But, we will cover the bare minimum of what one needs to know in order to understanding quantum computing theory and algorithms. As such, our treatment will gloss over some details and mathematical background. 
+
+We progress by covering some basic linear algebra before introducing the prevailing notation and formalism used in the field. It is important to note that the formalism of quantum mechanics is built on that of linear (and, more fundamentally, Lie) algebra(s). After the mathematics introduction, we will then discuss the six postulates of quantum mechanics in order to gain a more thorough understanding of quantum mechanics before moving on to topics more specific to quantum computing.
+
+\subsection{Linear Algebra Review}
+Before we dive into basic quantum mechanics, let's review some important concepts and definitions from linear algebra which will also help us develop a common language with which to proceed.
+
+First stop: \textbf{vectors}. Vectors are simply matrices with one of the dimensions set to one. We thus have two types of vectors: column vectors and row vectors. For a column vector $v$ in $\mathbb{R}^\textrm{n}$, we have:
+\begin{align}
+    \textbf{v} =
+    \begin{pmatrix}
+        v_1 \\
+        v_2 \\
+        \vdots \\
+        v_n
+    \end{pmatrix} \nonumber
+\end{align}
+
+\noindent where $v_i \in \mathbb{R}$. A row vector $w$ is then:
+\begin{align}
+    \textbf{w} =
+    \begin{pmatrix}
+        w_1 & w_2 & \hdots & w_n
+    \end{pmatrix} \nonumber
+\end{align}
+
+\noindent with $w_i \in \mathbb{R}$.
+
+Quantum mechanical states exist in complex spaces. So, using the above examples, one would actually have vectors in $\mathbb{C}^\textrm{n}$ such that $v_i,\,w_i \in \mathbb{C}$. Specifically, for quantum computing, our quantum bits, or qubits, are two-state systems, so one operates in the smaller $\mathbb{C}^\textrm{2}$.
+
+Next, we look look at \textbf{transposes} and \textbf{conjugates}. Transposing simply makes each row in a matrix a column and each column a row. In 2 dimensions, we have the transpose of a matrix \textbf{A} where
+\begin{align}
+    \textbf{A} =
+    \begin{pmatrix}
+        a_{11} & a_{12} \\
+        a_{21} & a_{22}
+    \end{pmatrix} \nonumber
+\end{align}
+
+\noindent equal to
+\begin{align}
+    \textbf{A}^\textrm{T} =
+    \begin{pmatrix}
+        a_{11} & a_{21} \\
+        a_{12} & a_{22}
+    \end{pmatrix}. \nonumber
+\end{align}
+
+If we then \textbf{conjugate} the matrix, we take the complex conjugate of each value in the matrix or vector. Namely, we'd now have:
+\begin{align}
+    \textbf{A}^\dagger = \left(\textbf{A}^\textrm{T}\right)^\ast =
+    \begin{pmatrix}
+        a_{11}^\ast & a_{21}^\ast \\
+        a_{12}^\ast & a_{22}^\ast
+    \end{pmatrix} \nonumber
+\end{align}
+
+\noindent where we have $\textbf{A}^\ast$ equal to the complex conjugation of each entry in $\textbf{A}$ and thus $\textbf{A}^\dagger$ defined as the \textbf{conjugate transpose} or \textbf{Hermitian adjoint} of the matrix $\textbf{A}$. When \textbf{A} acts on a vector \textbf{v}, the conjugate transpose reverses the order of operations, ie. $(\textbf{Av})^\dagger = \textbf{v}^\dagger\textbf{A}^\dagger$, due to the transpose identity for multiplication.
+
+Lastly, we consider \textbf{eigenvalues}. For a matrix $\textbf{B} \in \mathbb{C}^\textrm{n}$, we define eigenvectors $\textbf{v}_i$ and corresponding eigenvalues $\lambda_i$ such that
+\begin{align}
+    \textbf{B}\textbf{v}_i = \lambda_i\textbf{v}_i. \nonumber
+\end{align}
+
+\noindent While we refer to dedicated texts on linear algebra to discuss how eigenvectors and eigenvalues are calculated, we note that eigen-parameters are significant for quantum mechanics and thus quantum computing since they represent the results of a measurement operation. More details are discussed in Sections \ref{operators} and \ref{third_pos}.
+
+\subsection{Dirac Notation}
+It is now useful to introduce a notation formalism used in quantum mechanics and, especially, in quantum computing: Dirac ``bra-ket" notation. While it may at first look odd, it is in reality a simple translation of the ``wordier" vector notations used in linear algebra.
+
+Namely, we introduce two definitions: the ``bra" and the ``ket". Together, when we take an inner product (Section \ref{inner_prod}), they form a ``bra-ket" or bracket.\footnote{Physicists are really quite banal when coming to naming anything. So much so that we are often mistaken to be clever.}
+
+The ket, written as $\ket{\psi}$, where $\psi$ is an arbitrary variable used to label the ket, represents a column vector of arbitrary length. Again, in quantum computing, since we only concern ourselves with individual systems of two states, this becomes a 2-by-1 column vector. The bra, $\bra{\psi}$ then represents the conjugate transpose of the corresponding bra. So, for our purposes, the bra is a 1-by-2 row vector. More concretely, for a ket $\ket{\psi}$ such that
+\begin{align}
+    \ket{\psi} = 
+    \begin{pmatrix}
+        \alpha \\
+        \beta \\
+    \end{pmatrix},
+    \textrm{ the bra }
+    \bra{\psi} = 
+    \begin{pmatrix}
+        \alpha^\ast & \beta^\ast
+    \end{pmatrix}. \nonumber
+\end{align}
+
+For a qubit, we'll define the ground and excited states with $\ket{0}$ and $\ket{1}$, respectively, as
+\begin{align}
+    \ket{0} = 
+    \begin{pmatrix}
+        1 \\
+        0 \\
+    \end{pmatrix}
+    \textrm{ and }
+    \ket{1} = 
+    \begin{pmatrix}
+        0 \\
+        1 \\
+    \end{pmatrix} \nonumber
+\end{align}
+
+\noindent which are the real basis vectors of $\mathbb{C}^2$. The full quantum state of one qubit will then be a linear, complex superposition of these two basis vectors which are, by definition, normalized (magnitude one) and orthogonal (inner product zero). An arbitrary qubit state $\ket{\phi} = \alpha\ket{0} + \beta\ket{1}$ for $\alpha,\,\beta \in \mathbb{C}$. The state has corresponding bra $\bra{\phi} = \alpha^\ast\bra{0} + \beta^\ast\bra{1}$. We also impose the restriction $\left|\alpha\right|^2 + \left|\beta\right|^2 = 1$ to normalize the state for reasons to be discussed in Section \ref{third_pos}.
+
+\subsection{Linear Algebra in QM}
+\subsubsection{Inner Product} \label{inner_prod}
+When applying linear algebra to quantum mechanics there are a few concepts to operations and concepts to highlight. First is that of the inner product, which is a generalization of the dot product. For vectors like kets an bras, it is in fact just the dot product. But, it is useful to take a closer look using Dirac notation.
+
+Dirac notation actually makes the inner product quite straight-forward. Let's look at a state $\ket{\psi}$ with complex entries. To take the inner product of $\ket{\psi}$ with itself in order to find the magnitude of $\ket{\psi}$, we simply multiply $\ket{\psi}$ with it's conjugate transpose, which is exactly $\bra{\psi}$. So, the inner product of $\ket{\psi}$ with itself is $\braket{\psi}{\psi}$. For a normalized state, namely for a state where we impose the condition that the square magnitudes of its coefficients on basis states sum to one: $\sum^\textrm{n}_{i=1}\left|\alpha_i\right|^2=1$, the inner product will also be one. To see this, we decompose the inner product of $\ket{\psi}$ with itself.
+
+Taking $\ket{\psi}$ to be in $\mathbb{C}^\textrm{n}$, we can represent $\ket{\psi}$ as a complex superposition of the basis vectors of $\mathbb{C}^\textrm{n}$:
+\begin{align}
+    \ket{\psi} = \sum^\textrm{n}_{i=1}\alpha_i\ket{e_i} \nonumber
+\end{align}
+
+\noindent for $\alpha \in \mathbb{C}$. Now taking the inner product against itself, we find
+\begin{align}
+    \braket{\psi}{\psi} &= \sum^\textrm{n}_{i,j=1}\alpha_j^\ast\alpha_i\braket{e_j}{e_i}\nonumber\\
+    &= \sum^\textrm{n}_{i,j=1}\alpha_j^\ast\alpha_i\delta_{i,j}\nonumber\\
+    &= \sum^\textrm{n}_{i=1}\alpha_i^\ast\alpha_i\nonumber\\
+    &= \sum^\textrm{n}_{i=1}\left|\alpha_i\right|^2 = 1\nonumber
+\end{align}
+
+What about the inner product of two different states, say, $\ket{\psi}$ and $\ket{\phi}$? Well, since the inner product is again defined such that we take the complex transpose of one of the states, we have, for the inner product of $\ket{\psi}$ and $\ket{\phi}$, $\braket{\psi}{\phi} = \braket{\phi}{\psi}$. Defining $\ket{\phi} = \sum^\textrm{n}_{i=1}\beta_i\ket{e_i}$, we'd have $\braket{\phi}{\psi} = \sum^\textrm{n}_{i=1}\beta_i^\ast\alpha_i$. For normalized states, this value ranges from 0 to 1 (Can you show it?) and represents the ``overlap" between the two states.
+
+The inner product is a very important concept in quantum mechanics and quantum computing, so it is worth getting comfortable with it using Dirac notation.
+
+
+\subsubsection{Operators} \label{operators}
+Next, we consider quantum operators. Simply put, operators act on state vectors and are represented by matrices in the corresponding n-dimensional complex space. Some are defined in infinite dimensional space and must be truncated for finite dimensions. These operators become the classical analog of ``gates" in a quantum algorithm.
+
+Quantum operators are represented as a variable (often capital) with a hat, eg. \textbf{\^{H}}, \textbf{\^{x}}, or \textbf{\^{a}}, and, in technical terms, are defined as mapping one vector space $V$ to another $W$. For a quantum operator \textbf{\^{A}}, $\textbf{\^{A}}: V \rightarrow W$. They have (but are not limited to) the following properties:
+
+\begin{enumerate}
+    \item linearity
+        \begin{itemize}
+            \item For quantum operator \textbf{\^{A}} in $V \in \mathbb{C}^\textrm{n}$, $\textbf{\^{A}}\sum^n_i \ket{e_i} = \sum^n_i \textbf{\^{A}}\ket{e_i}$.
+        \end{itemize}
+    \item composites
+        \begin{itemize}
+            \item For quantum operators \textbf{\^{A}}, \textbf{\^{B}} in $V \in \mathbb{C}^\textrm{n}$, $(\textbf{\^{A}\^{B}}) \ket{\psi} = \textbf{\^{A}(\^{B}} \ket{\psi})$
+        \end{itemize}
+    \item commutation
+        \begin{itemize}
+            \item ``Order matters"
+            \item For quantum operators \textbf{\^{A}}, \textbf{\^{B}} in $V \in \mathbb{C}^\textrm{n}$, $\textbf{\^{A}\^{B}}\ket{\psi} \neq \textbf{\^{B}\^{A}} \ket{\psi}$
+            \item In fact, we have the idea of the commutator: The commutator of \textbf{\^{A}} and \textbf{\^{B}} is $[\textbf{\^{A}},\textbf{\^{B}}] = \textbf{\^{A}\^{B}} - \textbf{\^{B}\^{A}}$ and their anti-commutator is $\{\textbf{\^{A}},\textbf{\^{B}}\} = \textbf{\^{A}\^{B}} + \textbf{\^{B}\^{A}}$.
+            \item We say that two operators commute if their commutator is zero.
+        \end{itemize}
+\end{enumerate}
+
+We have special names for operators with distinct properties. Namely, we call an operator with the property $\hat{\textbf{A}}^\dagger = \hat{\textbf{A}}$ \textbf{hermitian} and an operator with the property $\hat{\textbf{A}}^\dagger\hat{\textbf{A}} = \hat{\textbf{A}}\hat{\textbf{A}}^\dagger = \mathbb{I} \equiv \hat{\textbf{A}}^\dagger = \hat{\textbf{A}}^{-1}$ \textbf{unitary}. Unitary operations are ``reversible" since action on a state with $\hat{\textbf{A}}^\dagger$ will undo the action of \textbf{\^{A}}. Both hermitian and unitary operators are significant for quantum mechanics. We will discuss this in more detail in Section \ref{pos}.
+
+Some important operators in quantum computing are 
+
+\noindent identity:
+$\mathbb{I} = 
+    \begin{pmatrix}
+        1 & 0 \\
+        0 & 1 \\
+    \end{pmatrix}\nonumber$
+    
+\noindent the Pauli matrices: 
+$\sigma_x = 
+    \begin{pmatrix}
+        0 & 1 \\
+        1 & 0 \\
+    \end{pmatrix}\;
+    \sigma_y = 
+    \begin{pmatrix}
+        0 & -i \\
+        i & 0 \\
+    \end{pmatrix}\;
+    \sigma_z = 
+    \begin{pmatrix}
+        1 & 0 \\
+        0 & -1 \\
+    \end{pmatrix}$
+    
+\noindent and the Hadamard:
+$\hat{H} = \frac{1}{\sqrt{2}}
+    \begin{pmatrix}
+        1 & 1 \\
+        1 & -1 \\
+    \end{pmatrix}$.
+    
+\noindent We will discuss all of these operators and their function in more detail in future lectures.
+    
+\subsubsection{Tensor Product}
+The tensor product is an important tool for thinking of multiple quantum systems. A single qubit, which, again, is a two-state system, will exist in a complex vector space, called a Hilbert space $\mathcal{H}_A$. If we introduce another qubit into our quantum computer, it will exist in its own Hilbert space $\mathcal{H}_B$. How then, do we talk about these two qubit together?
+
+Well, with a tensor product. Our full quantum computer system is now the tensor product of the two Hilbert spaces, namely $\mathcal{H}_A \otimes \mathcal{H}_B$. The state of each qubit will exist only in its relevant Hilbert space and an operator in $\mathcal{H}_A$ will only act on a state in $\mathcal{H}_A$ and vice versa. If qubit A is in state $\ket{\psi}$ and qubit B is in state $\ket{\phi}$, then our two-qubit computer is in state $\ket{\psi}_A \otimes \ket{\phi}_B$. Of course, this is generalizable to infinite numbers of qubits, or tensored Hilbert spaces.
+
+The tensor product carries a few properties:
+
+\begin{enumerate}
+    \item For $c \in \mathbb{C}$, $c\left(\ket{\psi}_A \otimes \ket{\phi}_B\right) = c\ket{\psi}_A \otimes \ket{\phi}_B = \ket{\psi}_A \otimes c\ket{\phi}_B$
+    \item Distribution: $\left(\ket{\psi_1}_A + \ket{\psi_2}_A\right)\otimes \ket{\phi}_B = \ket{\psi_1}_A \otimes \ket{\phi}_B + + \ket{\psi_2}_A \otimes \ket{\phi}_B$
+    \item Operators act in their own spaces: $\textrm{\^A}_A \otimes \textrm{\^B}_B\left(\ket{\psi}_A \otimes \ket{\phi}_B\right) = \textrm{\^A}_A\ket{\psi}_A \otimes \textrm{\^B}_B\ket{\phi}_B$
+\end{enumerate}
+
+\noindent We also make a notation simplification:
+\begin{align}
+    \ket{\psi}_A \otimes \ket{\phi}_B = \ket{\psi}\ket{\phi} = \ket{\psi,\,\phi} = \ket{\psi\phi} \nonumber
+\end{align}
+
+\noindent The tensor product acts as following on vectors and matrices:
+\begin{align}
+    \begin{pmatrix}
+        \alpha\\
+        \beta
+    \end{pmatrix} \otimes
+    \begin{pmatrix}
+        \gamma\\
+        \delta
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        \alpha\gamma\\
+        \alpha\delta\\
+        \beta\gamma\\
+        \beta\delta
+    \end{pmatrix} \nonumber
+\end{align}
+\noindent For an n$\times$m matrix \textbf{A} and p$\times$q matrix \textbf{B}:
+\begin{align}
+    \textbf{A} \otimes \textbf{B} = 
+    \begin{pmatrix}
+        \textrm{A}_{11}\textbf{B} & \textrm{A}_{12}\textbf{B} & \hdots & \textrm{A}_{1\textrm{n}}\textbf{B}\\
+        \textrm{A}_{21}\textbf{B} & \textrm{A}_{22}\textbf{B} & \hdots & \textrm{A}_{2\textrm{n}}\textbf{B}\\
+        \vdots \\
+        \textrm{A}_{\textrm{n}1}\textbf{B} & \textrm{A}_{\textrm{n}2}\textbf{B} & \hdots & \textrm{A}_{\textrm{n}\textrm{n}}\textbf{B}\\
+    \end{pmatrix}\nonumber
+\end{align}
+
+We call two-qubit states that can be written as the tensor product of two states \textbf{product states} and those that cannot \textbf{entangled states}. For example,
+\begin{align}
+    \ket{\psi} = \frac{1}{2}\left(\ket{00} + \ket{10} - \ket{01} - \ket{11}\right) = \frac{\ket{0} + \ket{1}}{\sqrt{2}} \otimes \frac{\ket{0} - \ket{1}}{\sqrt{2}}
+\end{align}
+is a product state while
+\begin{align}
+    \ket{\Psi^+} = \frac{\ket{00} + \ket{11}}{\sqrt{2}}
+\end{align}
+is not.
+
+\subsection{Postulates of QM} \label{pos}
+To gain a more technical and intuitive understanding of quantum mechanics, we discuss the postulates of the theory. There are six postulates which dictate the basis of quantum mechanical theory. We model our discussion around MIT Professor Jaffe's \href{http://web.mit.edu/8.05/handouts/jaffe1.pdf}{notes} from 8.05 as taught in 1996 (basic quantum mechanics has not really changed since then). This section will provide many of the important consequences involving quantum operators and measurement that are significant for quantum computing.
+
+\subsubsection{First Postulate}
+\begin{center}
+    \textit{A quantum state is represented by a ket, some $\ket{\psi}$ in the state space, called a wavefunction. It completely specifies the quantum state.}
+\end{center}
+
+The space of states is a vector space which means that the superposition of two states is again a state of the system. This allows us to define arbitrary states $\ket{\psi} = \sum^\textrm{n}_ia_i\ket{e_i}$ for basis vectors $\ket{e_i}$ of the n-dimensional state space. This describes phenomena like the double-slit diffraction of electrons.
+
+As a Hilbert space, the space of states has with it a defined inner product. Namely,
+\begin{align}
+    \left(\ket{\psi},\ket{\phi}\right) \equiv \braket{\psi}{\phi} = \int dx\psi^\ast(x)\phi(x)
+\end{align}
+
+We first define the inner product as an operation acting on two states in the ket space. Then the second step introduces the ``bra space" of the same dimension as the ket space, and defines the inner product as an operation involving one element of the each space. Finally, we reduce to the familiar continuous inner product which represents the overlap of $\ket{\psi}$ and $\ket{\phi}$. This notation allows us to see clearly that
+\begin{align}
+    \braket{\psi}{\phi}^\ast = \braket{\phi}{\psi}.
+\end{align}
+
+\subsubsection{Second Postulate}
+\begin{center}
+    \textit{Classical observables are introduced into quantum mechanics using operators. Specifically, every observable (measurable property) of a physical system is described by an operator that acts state kets.}
+\end{center}
+
+Classical observables (such as position $x$ or momentum $p$) are made ``quantum" by transforming them into quantum operators. One simply adds the operator hat ( $\hat{ }$ ) on top of the observable's variable.
+
+Notation-wise, an operator acts on a state from the left, ie. $\textrm{\^A}\ket{\psi}$. In general, an operator acting on a state will change the state. For every operator, there are, however, states which are not changed by the action of the operator, giving, for example,
+\begin{align}
+\textbf{\^A}\ket{\psi_i} = a_i\ket{\psi_i}
+\end{align}
+
+\noindent These states are eigenstates to the operator and the value $a_i$ is the eigenvalue which represents the observable's value. An operator acting on a state which is not one of its eigenstates, will produce a probabilistic outcome based on the states representation in the basis of eigenstates for the operator. In this case, the operator will also change the quantum state of the system.
+
+\subsubsection{Third Postulate} \label{third_pos}
+\begin{center}
+    \textit{The result of a measurement of an observable with an operator \textbf{\^A} will only ever be an eigenvalue of \textbf{\^A}.}
+\end{center}
+
+This postulates leads to the ``quantum" or ``quantized" nature of quantum mechanics. Some operators, like the position \textbf{\^x} or momentum \textbf{\^p} operators, have a set of continuous eigenvalues, so this proposition is not far removed from what we are used to from classical mechanics. However, for operators with discrete eigenvalues such as the Hamiltonian (ie. energy) operator for particle in a bound well, this proposition creates an unintutive result.
+
+We note an important requirement here. First, measured values, in other words, the eigenvalues, must be real since these are real, classically measured observables. This means that operators corresponding to an observable must be Hermitian (remember Section \ref{operators}). Hermitian operators also have eigenstates which form a complete basis which means that any state in the space can be decomposed into a linear superposition of eigenstates of the operator. These operators can be re-written as $\textbf{\^A} = \sum_i\lambda_i\ket{a_i}\bra{a_i}$ for eigenvalues $\lambda_i$ and corresponding eigenvectors $\ket{a_i}$.
+
+\subsubsection{Fourth Postulate} \label{fourth_pos}
+\begin{center}
+    \textit{When a measurement of an observable with operator \textbf{\^A} is made on a generic state $\ket{\psi}$, the probability of obtaining a certain eigenvalue $a_i$ is given by the square of the inner product of $\ket{\psi}$ with the corresponding eigenstate $\left|\braket{a_i}{\psi}\right|^2$.}
+\end{center}
+
+Professor Jaffe gives a very good treatment of this postulate, so we abbreviate them here.
+
+We assume that the states are normalized which is in general possible. States are usually normalized to unity,
+\begin{align}
+    \braket{\psi}{\psi} &= 1\nonumber\\
+    \braket{a_j}{a_k} &= \delta_{jk}
+\end{align}
+
+The complex number, $\braket{a_i}{\psi}$ is known as the ``probability amplitude", to measure $a_i$ as the value for the observable \textbf{A} in the state $\ket{\psi}$.
+
+The postulate suggests the following algebraic exercise. First, any state can be expanded as a superposition of \textbf{\^A}-eigenstates (see Postulate 3),
+\begin{align}
+    \ket{\psi} = \sum_nc_n\ket{a_n}.
+\end{align}
+
+Next use the orthonormality of the \textbf{\^A}-eigenstates to find an expression for the expansion coefficients $c_n$,
+\begin{align}
+    \braket{a_j}{\psi} &= \sum_nc_n\braket{a_j}{a_n}\\
+    &= c_j.
+\end{align}
+
+So,
+\begin{align}
+    \ket{\psi} = \sum_n\braket{a_n}{\psi}\ket{a_n}
+\end{align}
+
+where we have the complex number $\braket{a_n}{\psi}$ and the state $\ket{a_n}$. The component of $\ket{\psi}$ along the direction of the nth eigenstate of \textbf{\^A} is given by $\braket{a_n}{\psi}$. The measurement operation yields the result $a_n$ with a probability proportional to the square of this component, $\left|\braket{a_n}{\psi}\right|^2$.
+
+The probability of obtaining some result at all is unity. For states normalized to unity,
+\begin{align}
+    \left|\braket{\psi}{\psi}\right|^2 = \left|\sum_m\sum_nc_m^\ast c_n\braket{a_m}{a_n}\right|^2.
+\end{align}
+
+Using $\left|\braket{\psi}{\psi}\right|^2 = 1$ and $\braket{a_m}{a_n} = \delta_{mn}$, we get
+\begin{align}
+    \sum_n\left|c_n\right|^2 = 1.
+\end{align}
+
+According to the usual rules of probability, we can compute the ``expectation value" of the observable \textbf{A}. If the probability to observe $a_n$ is $\left|c_n\right|^2$, then the expected value
+(denoted $\left<\textbf{A}\right>$) is
+\begin{align}
+    \left<\textbf{A}\right> = a_n\left|c_n\right|^2
+\end{align}
+as long as each eigenstate has a unique eigenvalue (the operator \textbf{\^A} has no degenerate eigenvalues).
+
+\subsubsection{Fifth Postulate}
+\begin{center}
+    \textit{Immediately after the measurement of an observable \textbf{A} with a value $a_n$, the state of the system is the normalized eigenstate $\ket{a_n}$.}
+\end{center}
+
+This postulate gives way to the idea of the ``collapse of the wavepacket". While measuring a state $\ket{\psi}$ for the observable \textbf{A} gives the value $a_n$ with probability $\left|\braket{a_n}{\psi}\right|$, results for remeasuring immediately after the first measurement are not statistically distributed. Namely, after measurement, the state $\ket{\psi}$ is found in the renormalized state $\ket{a_n}$ since the outcome is always $a_n$.
+
+Wavefunction collapse is one of the more unintuitive concepts in quantum mechanics, but is supported by experimental results with repeated measurements.
+
+\subsubsection{Sixth Postulate}
+\begin{center}
+    \textit{Quantum states generally change (evolve) with time. This time evolution preserves the normalization of the state. The time evolution of the state of a quantum system is described by $\ket{\psi(t)} = \textbf{\^U}(t,t_0)\ket{\psi(t_0)}$, for some unitary operator \^U.}
+\end{center}
+
+A quantum state must evolve by a unitary operator since the norm of the state must be preserved. While individual probabilities of a observing certain eigenvalues of an operator may change, the total sum ($\sum_n\left|c_n\right|^2$ from before) remains the same. The probability for measuring some value of any operator remains unity.
+
+As such, for a state evolving with time $\ket{\psi(t)}$, we maintain $\left|\braket{\psi(t)}{\psi(t)}\right|^2 = 1$ for all $t$. So,
+\begin{align}
+    \left|\braket{\psi(t)}{\psi(t)}\right|^2 &= 1\\
+    &= \left|\bra{\psi(t_0)}\textbf{\^U}^\dagger(t,t_0)\textbf{\^U}(t,t_0)\ket{\psi(t_0)}\right|^2\nonumber\\
+    &= \left|\braket{\psi(t_0)}{\psi(t_0)}\right|^2 = 1,
+\end{align}
+which is consistent with our earlier requirement for a unitary operator. This also means that time evolution is a reversible process. We reverse some time evolution given by $\textbf{\^U}(t,t_0)$ we simply act with $\textbf{\^U}(t_0,t) = \textbf{\^U}^\dagger(t,t_0)$.
+
+This postulate actually leads to the Schr\"odinger equation which requres that a state $\ket{\psi}$ evolves under
+\begin{align}
+    i\hbar\frac{d}{dt}\ket{\psi(t)} = \mathcal{H}\ket{\psi(t)}
+\end{align}
+for a Hermition operator $\mathcal{H}$ which is a system-dependent operator called the Hamiltonian.
+
+\subsection{Uncertainty Principle}
+
+The postulates of quantum mechanics highlight the probabilistic nature of the theory. This in turn gives rise to some interesting (and sometime unintuitive or even concerning) phenomena. One of these is the uncertainty principle which states that there is a limit to the precision with which one is able to determine the values of conjugate observables (such as position and momentum and energy and time).
+
+Stepping back to classical probability theory, we can define an expectation value $\left<\textbf{A}\right>$, variance $(\Delta\textbf{A})^2$, and standard deviation $(\Delta\textbf{A})$ such that for possible values $a_i$ each with probability $p_i$,
+\begin{align}
+    \left<\textbf{A}\right> &= \sum_ia_ip_i,\\
+    (\Delta\textbf{A})^2 &= \left<\left(\textbf{A}-\left<\textbf{A}\right>\right)^2\right> = \left<\textbf{A}^2\right> - \left<\textbf{A}\right>^2,\\
+\end{align}
+and
+\begin{align}
+    \Delta\textbf{A} = \sqrt{\left<\textbf{A}^2\right> - \left<\textbf{A}\right>^2}.
+\end{align}
+
+Using the fourth postulate, we can then apply this to quantum mechanics and relate the product of the standard deviations of two operators to their commutator. More explicitly, we use $p_i = \left|\braket{\psi}{\phi_i}\right|^2$ to find $\Delta\textbf{A}\Delta\textbf{B}$ in terms of $[\textbf{A},\textbf{B}]$. The standard deviation $\Delta\textbf{A}$ measures the uncertainty in our knowledge of the value of the observable \textbf{A}, so we will be placing a limit on our this uncertainty.
+
+First, in quantum mechanics, the expectation value of an observable simplifies to
+\begin{align}
+    \left<\textbf{A}\right> &= \sum_ia_ip_i\nonumber\\
+    &= \sum_ia_i\braket{\psi}{\phi_i}\braket{\phi_i}{\psi}\\
+    &= \bra{\psi}\left(\sum_ia_i\ket{\phi_i}\bra{\phi_i}\right)\ket{\psi}\nonumber\\
+    &= \bra{\psi}\textbf{A}\ket{\psi}.
+\end{align}
+
+To derive the uncertainty principle, let
+\begin{align}
+    \bra{\psi}\textbf{AB}\ket{\psi} = re^{i\phi}
+\end{align}
+where $re^{i\phi}$ represents some arbitrary complex number. Using $\bra{\psi}\textbf{AB}\ket{\psi}^\dagger = \bra{\psi}\textbf{BA}\ket{\psi}$ for Hermitian operators \textbf{\^A} and \textbf{\^B}, one finds
+\begin{align}
+    \bra{\psi}\textbf{AB}-\textbf{BA}\ket{\psi} = re^{i\phi} - re^{-i\phi} = 2ir\sin\phi,\\
+    \bra{\psi}\textbf{AB}+\textbf{BA}\ket{\psi} = re^{i\phi} + re^{-i\phi} = 2r\cos\phi,
+\end{align}{}
+and
+\begin{align}
+    \left|\bra{\psi}\textbf{AB}+\textbf{BA}\ket{\psi}\right|^2 + \left|\bra{\psi}\textbf{AB}-\textbf{BA}\ket{\psi}\right|^2 = 4r^2.
+    \label{uncertainty_mag}
+\end{align}
+Thus follows
+\begin{align}
+    \left|\bra{\psi}\textbf{AB}-\textbf{BA}\ket{\psi}\right|^2 \leq 4\left|\bra{\psi}\textbf{AB}\ket{\psi}\right|^2
+\end{align}
+since both arguments on the left side of 
+Eq. \ref{uncertainty_mag} are necessarily greater than or equal to zero. One further reduces using the inner product inequality from linear algebra to find
+\begin{align}
+    \frac{\left|\bra{\psi}\left[\textbf{A},\textbf{B}\right]\ket{\psi}\right|^2}{4} \leq \bra{\psi}\textbf{A}^2\ket{\psi}\bra{\psi}\textbf{B}^2\ket{\psi}.
+\end{align}
+
+Now, define $\textbf{A} = \textbf{C} - \left<\textbf{C}\right>$ and $\textbf{B} = \textbf{D} - \left<\textbf{D}\right>$ where $\left[\textbf{A},\textbf{B}\right] = \left[\textbf{C},\textbf{D}\right]$, $\bra{\psi}\textbf{A}^2\ket{\psi} = \left(\Delta\textbf{C}\right)^2$, and $\bra{\psi}\textbf{B}^2\ket{\psi} = \left(\Delta\textbf{D}\right)^2$. So,
+\begin{align}
+    \left|\frac{\bra{\psi}\left[\textbf{C},\textbf{D}\right]\ket{\psi}}{2}\right|^2 \leq \left(\Delta\textbf{C}\right)^2\left(\Delta\textbf{D}\right)^2,
+\end{align}
+which brings us to the Heisenberg Uncertainty principle:
+\begin{align}
+    \frac{\bra{\psi}\left[\textbf{C},\textbf{D}\right]\ket{\psi}}{2} \leq \Delta\textbf{C}\Delta\textbf{D}.
+\end{align}
+
+This statement gains significance when we considering the position and momentum conjugate variables. Since $\left[\textbf{\^x},\textbf{\^p}\right] = i\hbar$, $\Delta\textbf{\^x}\Delta\textbf{\^p} \geq \frac{\hbar}{2}$, so one can only measure together the position and momentum variables of a system to a minimum of $\frac{\hbar}{2}$. Increasing knowledge about the position of a system necessarily decreases the knowledge an observer can have about the momentum of a system (and vice versa). This is true for all non-communiting observables.
+
+\subsection{Local Hidden Variables}
+
+Einstein was rather uncomfortable with the idea that quantum mechanics was a fundamentally probabilistic theory\footnote{as shown by his famous statement ``God does not play dice.''}. He say quantum mechanics as akin to thermodynamics which describes macroscopic effects using derivations from microscopic or ``hidden'' variables. We illustrate this idea with an example using a system of three (two-state) quantum spins (like an atom or a qubit, for example). This system has a total Hilbert space
+\begin{align}
+\mathcal{H} = \mathcal{H}^{\otimes3}_\textrm{spin} = \mathcal{H}^A_\textrm{spin}\otimes\mathcal{H}^B_\textrm{spin}\otimes\mathcal{H}^C_\textrm{spin}.
+\end{align}
+
+For a given state $\ket{\psi}$, one cannot predict the outcome of measuring each spin along a single axis. However, one could assume that each spin has a secret (secret to the observer) setting: either $\uparrow = +1$ or $\downarrow = -1$ for each of $x$, $y$, and $z$ for each spin. We label these $S^1_x$ for an $\textbf{\^x}$ measurement on the first qubit, and so on. As such, the system has its own truth table, so to speak, which determines the outcome of any measurement on the system (say, $\textbf{\^x}_1\textbf{\^y}_2\textbf{\^y}_3$ or $\textbf{\^z}_1\textbf{\^x}_2\textbf{\^y}_3$).
+
+In 1993, physicists Greenberger, Horne, and Zeilinger attempted to show the invalidity of local hidden variables. They wrote down a state, known as the GHZ state:
+\begin{align}
+    \ket{\Psi}_{GHZ} = \frac{1}{\sqrt{2}}\left(\ket{000} - \ket{111}\right)
+\end{align}
+for a system of three spins. We will measure the following operators on the GHZ state: $\textbf{\^x}_1\textbf{\^x}_2\textbf{\^x}_3$, $\textbf{\^x}_1\textbf{\^y}_2\textbf{\^y}_3$, $\textbf{\^y}_1\textbf{\^x}_2\textbf{\^y}_3$, $\textbf{\^y}_1\textbf{\^y}_2\textbf{\^x}_3$.
+
+The expectation value of the first observable $x_1x_2x_3$ on the GHZ state is
+\begin{align}
+    \left<\textbf{\^x}_1\textbf{\^x}_2\textbf{\^x}_3\right>_{GHZ} &= \bra{\Psi}_{GHZ}\sigma^1_x\sigma^2_x\sigma^3_x\ket{\Psi}_{GHZ}\\
+    &= \frac{1}{\sqrt{2}}\bra{\Psi}_{GHZ}\sigma^1_x\sigma^2_x\sigma^3_x\left(\ket{000} - \ket{111}\right)\nonumber\\
+    &= \frac{1}{\sqrt{2}}\bra{\Psi}_{GHZ}\left(\ket{111} - \ket{000}\right)\nonumber\\
+    &= -\frac{1}{\sqrt{2}}\bra{\Psi}_{GHZ}\left(\ket{000} - \ket{111}\right)\nonumber\\
+    &= -\braket{\Psi}{\Psi}_{GHZ}\nonumber\\
+    &= -1.
+\end{align}
+For $x_1y_2y_3$, the expectation value is
+\begin{align}
+    \left<\textbf{\^x}\textbf{\^y}\textbf{\^y}\right>_{GHZ} &= \frac{1}{\sqrt{2}}\bra{\Psi}_{GHZ}\sigma^1_x\sigma^2_y\sigma^3_y\left(\ket{000} - \ket{111}\right)\nonumber\\
+    &= \frac{1}{\sqrt{2}}\bra{\Psi}_{GHZ}\left(\ket{1}_A\left(i\ket{1}_B\right)\left(i\ket{1}_C\right) - \ket{0}_A\left(-i\ket{0}_B\right)\left(-i\ket{0}_C\right)\right)\nonumber\\
+    &= -\frac{1}{\sqrt{2}}\bra{\Psi}_{GHZ}\left(-\ket{111} + \ket{000}\right)\nonumber\\
+    &= \braket{\Psi}{\Psi}_{GHZ}\nonumber\\
+    &= 1
+\end{align}
+as is the expectation values for $y_1x_2y_3$ and $y_1y_2x_3$.
+
+We have, then
+\begin{align}
+    \left<\textbf{\^x}\textbf{\^x}\textbf{\^x}\right>\left<\textbf{\^x}\textbf{\^y}\textbf{\^y}\right>\left<\textbf{\^y}\textbf{\^x}\textbf{\^y}\right>\left<\textbf{\^y}\textbf{\^y}\textbf{\^x}\right> &= (-1)(+1)(+1)(+1)\nonumber\\
+    &= -1.
+\end{align}
+However, if we calculate this same value using the hidden variables approach, we find
+\begin{align}
+    \left(S^1_xS^2_xS^3_x\right)\left(S^1_xS^2_yS^3_y\right)\left(S^1_yS^2_xS^3_y\right)\left(S^1_yS^2_yS^3_x\right) &= \left(S^1_x\right)^2\left(S^1_y\right)^2\left(S^2_x\right)^2\left(S^2_y\right)^2\left(S^3_x\right)^2\left(S^3_y\right)^2\nonumber\\
+    &= (\pm1)^2\nonumber\\
+    &= +1,
+\end{align}
+which is clearly a contradiction. So, if quantum mechanics is correct, as research and experiment suggest, our world really is probabilistic after all\footnote{Sorry, Mr. Einstein.}.
+
+\subsection{The Bloch Sphere}\label{block_sphere}
+The Bloch sphere is a useful tool for visualizing qubit states (or any quantum state in $\mathcal{H}^2$. A pure quantum state is represented by a vector on the surface of a unit sphere. The state $\ket{0}$ exists at the top of the sphere (the north pole) and the state $\ket{1}$ exists at the bottom (the south pole). Using spherical coordinates, arbitrary qubit states are defined on the sphere with $\ket{\psi} = \cos\frac{\theta}{2}\ket{0} + e^{i\phi}\sin\frac{\theta}{2}\ket{1}$ with polar angle $\theta$ and azimuthal angle $\phi$. Any state can be written $\ket{\psi} = e^{i\gamma}\left(\cos\frac{\theta}{2}\ket{0} + e^{i\phi}\sin\frac{\theta}{2}\ket{1}\right)$ where we factor out the phase associated with the $\ket{0}$ basis state. However, in quantum mechanics, the arbitrary phase $e^{i\gamma}$ has no observable effects on the state. So, any qubit state is described by a point on the unit sphere.
+
+Using this formula, we can define the states which match the positive and negative x, y, and z-axes as
+\begin{align}
+    +z &= \ket{0}\nonumber\\
+    -z &= \ket{1}\nonumber\\
+    +x &= \ket{+} = \frac{1}{\sqrt{2}}\left(\ket{0} + \ket{1}\right)\nonumber\\
+    -x &= \ket{-} = \frac{1}{\sqrt{2}}\left(\ket{0} - \ket{1}\right)\nonumber\\
+    +y &= \ket{+i} = \frac{1}{\sqrt{2}}\left(\ket{0} + i\ket{1}\right)\nonumber\\
+    -y &= \ket{-i} = \frac{1}{\sqrt{2}}\left(\ket{0} - i\ket{1}\right)
+\end{align}
+which one can prove to oneself using appropriate values for $\theta$ and $\phi$.
+
+Let's consider the action of the Pauli matrices on states on the Bloch sphere. We will find that they, when exponentiated, generate rotations. Specifically, a rotation along some axis \^n is represented by
+\begin{align}
+    R_n(\theta) &= e^{-i\frac{\theta}{2}\textrm{\^n}\cdot\vec{\sigma}}\\
+    &= \cos\frac{\theta}{2} I - i\sin\frac{\theta}{2} \textrm{\^n}\cdot\vec{\sigma}
+\end{align}
+where $\vec{\sigma}$ is the ``vector" of Pauli matrices. In the second line, we use the fact that $\sigma_i^2 = 1$ for the Paulis. In the following, we show that the above truly is a rotation on the Bloch sphere.
+
+To do so, it is useful to consider the density operator formed by the outer product of the qubit state:
+\begin{align}
+    \rho &= \ket{\psi}\bra{\psi} = \ket{\psi}\otimes\bra{\psi}\\
+    &=
+        \begin{pmatrix}
+            \cos^2\frac{\theta}{2} & e^{-i\phi}\cos\frac{\theta}{2}\sin\frac{\theta}{2} \\
+            e^{i\phi}\cos\frac{\theta}{2}\sin\frac{\theta}{2} & \sin^2\frac{\theta}{2}
+        \end{pmatrix}\nonumber\\
+    &= \frac{1}{2}
+        \begin{pmatrix}
+            1+\cos\theta & \cos\phi\sin\theta - i\sin\phi\sin\theta \\
+            \cos\phi\sin\theta + i\sin\phi\sin\theta & 1-\cos\theta
+        \end{pmatrix}\\
+    &= \frac{1}{2}\left(I+X\cos\phi\sin\theta + Y\sin\phi\sin\theta+Z\cos\theta\right)\\
+    &= \frac{1}{2}\left(I+\vec{r}_\rho\cdot\vec{\sigma}\right)
+\end{align}
+where we have $I, X, Y, Z$ as the identity and Pauli matrices and $\vec{r}_\rho = (r_x,\;r_y,\;r_z) = (\cos\phi\sin\theta,\;\sin\phi\sin\theta,\;\cos\theta)$ as a unit vector in spherical coordinates.
+
+The action of an operator on a quantum state must obey unitary evolution, preserving the norm of the state. The action of a unitary operator on a state can we used to find the action on the density operator $\rho$. Since a unitary operator $\hat{U}$ acting on a state $\ket{\psi}$ is given by $\ket{\psi} \rightarrow \textrm{\^U}\ket{\psi}$, the action of the operator on $\rho$ is
+\begin{align}
+    \rho = \ket{\psi}\bra{\psi} \rightarrow \textrm{\^U}\ket{\psi}\bra{\psi}\textrm{\^U}^\dagger.
+\end{align}
+
+Our rotation matrix is unitary since the Pauli matrices are Hermitian. Let's observe the action of a z-axis rotation on our density matrix. For a rotation around the z-axis, $R_z(\theta) = cos\frac{\theta}{2}I-i\sin\frac{\theta}{2}\sigma_z$. Since $\rho$ is a sum of the Pauli matrices, we can evaluate $R_z(\theta)$ on each individually:
+\begin{align}
+    \rho' &= R_z(\theta)\rho R_z(\theta)^\dagger\\
+    &= \frac{1}{2}\left(I+r_x R_z(\theta)X R_z(\theta)^\dagger +r_y R_z(\theta)Y R_z(\theta)^\dagger + r_z R_z(\theta)Z R_z(\theta)^\dagger\right).
+\end{align}
+For the first term, the we use the unitary property of the rotation matrix.
+
+Expanding the $X$ term, we have
+\begin{align}
+    R_z(\theta)X R_z(\theta)^\dagger &= \left(\cos\frac{\theta}{2}I-i\sin\frac{\theta}{2}\sigma_z\right)X\left(\cos\frac{\theta}{2}I+i\sin\frac{\theta}{2}\sigma_z\right)\\
+    &= \cos^2\frac{\theta}{2}X + i\sin\frac{\theta}{2}\cos\frac{\theta}{2}XZ - i\sin\frac{\theta}{2}\cos\frac{\theta}{2}ZX+\sin^2\frac{\theta}{2}ZXZ\\
+    &= \cos^2\frac{\theta}{2}X + \sin\frac{\theta}{2}\cos\frac{\theta}{2}Y + \sin\frac{\theta}{2}\cos\frac{\theta}{2}Y - \sin^2\frac{\theta}{2}X\\
+    &= \left(\cos^2\frac{\theta}{2}-- \sin^2\frac{\theta}{2}\right)X + 2\sin\frac{\theta}{2}\cos\frac{\theta}{2}Y\nonumber\\
+    &= \cos\theta X + \sin\theta Y.
+\end{align}
+Similarly, we can show\footnote{Give it shot!}
+\begin{align}
+    R_z(\theta)Y R_z(\theta)^\dagger &= \cos\theta Y - \sin\theta X\\
+    R_z(\theta)Z R_z(\theta)^\dagger &= Z.
+\end{align}
+Now, rewriting $\rho'$,
+\begin{align}
+    \rho' &= \frac{1}{2}\left(I+r_x R_z(\theta)X R_z(\theta)^\dagger +r_y R_z(\theta)Y R_z(\theta)^\dagger + r_z R_z(\theta)Z R_z(\theta)^\dagger\right)\nonumber\\
+    &= \frac{1}{2}\left(I+r_x \cos\theta X + \sin\theta Y +r_y \cos\theta Y - \sin\theta X + r_z Z\right)\nonumber\\
+    &= \frac{1}{2}\left(I+(r_x\cos\theta-r_y\sin\theta)X + (r_x\sin\theta+r_y\cos\theta)Y + r_z Z\right)\\
+    &= \frac{1}{2}\left(I+r_x'X + r_y'Y+r_z'Z\right)
+\end{align}
+where we have the transformed positions
+\begin{align}
+    r_x' &= r_x\cos\theta-r_y\sin\theta\nonumber\\
+    r_y' &= r_x\sin\theta+r_y\cos\theta\nonumber\\
+    r_z' &= r_z
+\end{align}
+which match exactly what we expect from a rotation around the z-axis. We can then construct the $R_z(\theta)$ rotation matrix
+\begin{align}
+    \begin{pmatrix}
+        \cos\theta & -\sin\theta & 0\\
+        \sin\theta & \cos\theta & 0\\
+        0 & 0 & 1
+    \end{pmatrix}.
+\end{align}
+We can do something similar to construct the matrix for a rotation around an arbitrary axis by making composite rotations with $R_x$, $R_y$, and $R_z$.
+
+\subsubsection{Density Matrix}
+The density matrix is a powerful construct that allows us to, for example, compare quantum states with classical statistics and consider the effect of measurements. We define the density matrix $\rho$:
+\begin{align}
+    \rho = \ket{\psi}\bra{\psi}
+\end{align}
+as in Section \ref{block_sphere}.
+
+As an example, we can use the density matrix to determine the difference between a coin flip and an equal quantum superposition.
+
+We term processes that take the off-diagonal elements to zero ``decoherence", which is an important negative effect which is, for many architectures, the main obstacle toward scalable quantum processors.
+
+\section{Quantum Circuits}
+With the above background, we can now take a look at quantum analogues of classical computing gates. In classical computing, bits can be 0 or 1 and $n$ input bits are mapped to $m$ output bits. We also have traditional logical operations, or gates, such as AND, OR, NOT, NAND, and Fanout (copy) (see Table \ref{basic_gates}).
+
+\begin{table}
+    \centering
+    AND: 
+    \begin{tabular}{c|c c}
+        out & a & b\\\hline
+        0 & 0 & 0\\
+        0 & 1 & 0\\
+        0 & 0 & 1\\
+        1 & 1 & 1\\
+    \end{tabular}\;\;
+    OR: 
+    \begin{tabular}{c|c c}
+        out & a & b\\\hline
+        0 & 0 & 0\\
+        1 & 1 & 0\\
+        1 & 0 & 1\\
+        1 & 1 & 1\\
+    \end{tabular}\;\;
+    NAND: 
+    \begin{tabular}{c|c c}
+        out & a & b\\\hline
+        1 & 0 & 0\\
+        1 & 1 & 0\\
+        1 & 0 & 1\\
+        0 & 1 & 1\\
+    \end{tabular}
+    \caption{Basic classical gates}
+    \label{basic_gates}
+\end{table}
+
+The set of {AND, OR, NOT} is a universal set of gates. Namely, all other gates can be created from combinations of elements in the universal set. The NAND gate is also universal (with ancila bits) as is the Toffoli gate, which we will discuss later.
+
+We define a reversible gate as a gate where given an output you can figure out the inputs. The Toffoli gate is reversible while the NAND gate is not. Reversibility relates to Landauer's principle which states that
+
+\textit{For every bit of information erased, you dissipate energy greater than $k_bT\ln2 \approx 10^{-20} \textrm{J}$}
+Since irreversible gates by definition involve the erasure of information. In quantum systems, since our kets evolve by unitary operations which are reversible, we require all quantum gates to be reversible.
+
+\subsection{Single Qubit Gates}
+The common single qubit gates are the Pauli matrices
+
+Pauli x, $\sigma_x$ acts as a NOT gate on our computational basis. $\sigma_z$, the PHASE gate, adds a phase to $\ket{1}$. Lastly, $\sigma_y$ adds a global phase (adds the same phase to both basis states) as well as performs a NOT operation. As such, $\sigma_y$ is a combination of $\sigma_x$ and $\sigma_z$. In fact, the Pauli matrices are related by permutation:
+\begin{align}
+    \sigma_i\sigma_j = \delta_{ij}\mathbb{I} + \epsilon_{ijk}i\sigma_k
+    \label{pauli_permute}
+\end{align}
+which means that we can get all three Pauli gates from just two of them. In Eq. \ref{pauli_permute}, we use the Levi-Civita symbol $\epsilon_{ijk}$.
+
+The Hadamard gate,
+\begin{align}
+    H=\frac{1}{\sqrt{2}} =
+    \begin{pmatrix}
+        1 & 1\\
+        1 & -1
+    \end{pmatrix}
+\end{align}
+maps
+\begin{align}
+    \ket{0} \rightarrow \frac{1}{\sqrt{2}}\left(\ket{0}+\ket{1}\right)\nonumber\\
+    \ket{1} \rightarrow \frac{1}{\sqrt{2}}\left(\ket{0}-\ket{1}\right).\nonumber
+\end{align}
+These new states are again orthogonal. The Hadamard gate actually represents a rotation around the line on the x-z plane that is at a 45\degree angle.
+
+\subsection{Two Qubit Gates}
+To actually make a useful quantum processor though, we need to have gates for multiple qubits on hand. The most general simple two qubit gate is a controlled unitary which applies a unitary operator on the second qubit based on the state of the first, ``control", qubit. The gate applies the unitary to qubit 2 if the control qubit is in the state $\ket{1}$ and applies the identity otherwise. The 4x4 matrix which represents the action of the two qubit gate in the tensored two qubit space is
+\begin{align}
+    CU = 
+    \begin{pmatrix}
+    1 & 0 & 0 & 0\\
+    0 & 1 & 0 & 0\\
+    0 & 0 & U_{11} & U_{12}\\
+    0 & 0 & U_{21} & U_{22}\\
+    \end{pmatrix}.
+\end{align}
+
+An example of a controlled unitary operator is the CNOT gate which has the unitary equal to $\sigma_x$:
+\begin{align}
+    CNOT = 
+    \begin{pmatrix}
+    1 & 0 & 0 & 0\\
+    0 & 1 & 0 & 0\\
+    0 & 0 & 0 & 1\\
+    0 & 0 & 1 & 0\\
+    \end{pmatrix}.
+\end{align}
+
+The action of CNOT on the state with control bit $\ket{\psi} = \alpha\ket{0} \beta\ket{1}$ and target qubit $\ket{\phi} = a\ket{0} b\ket{1}$ produces entanglement since each part of the control bit's superposition states acts on the target qubit separately.
+
+\subsection{No-Cloning Theorem}
+In quantum systems, we do not have access to a Fanout, or copy, gate. Namely, any state $\ket{\psi}$ cannot be copied onto another quantum system. Let's begin our proof by supposing we have two identical quantum systems A and B with which we can build a tensored Hilbert space $\mathcal{H}=\mathcal{H}_A\otimes\mathcal{H}_B$ where $\mathcal{H}_A=\mathcal{H}_B$. Now assume we have a unitary operator whose action in $\mathcal{H}$ is to copy the normalized state of system A into the state of system B irrespective of the current state of B. In other words, we define a $U$ in $\mathcal{H}$ such that
+\begin{align}
+    U(\ket{\psi}_A\ket{e}_B) = e^{i\alpha_{\psi,e}}\ket{\psi}_A\ket{\psi}_B
+\end{align}
+where we have introduced an arbitrary global phase which has no action on the quantum system but which depends on the initial states $\ket{\psi}$ and $\ket{e}$. Recall that the quantum mechanical state defines a normalized vector in a Hilbert space only up to a phase factor.
+
+We choose two arbitrary initial states of system A: $\ket{\psi}$ and $\ket{\phi}$. Now, we proceed such that
+\begin{align}
+    \braket{\psi}{\phi}_A\braket{e}{e}_B &= \bra{\psi}_A\bra{e}_B\ket{\phi}_A\ket{e}_B\nonumber\\
+    &= \bra{\psi}_A\bra{e}_BU^\dagger U\ket{\phi}_A\ket{e}_B\nonumber\\
+    &= e^{i(\alpha_{\phi,e}-\alpha_{\psi,e})}\bra{\psi}_A\bra{\psi}_B\ket{\phi}_A\ket{\phi}_B\nonumber\\
+    &= e^{i(\alpha_{\phi,e}-\alpha_{\psi,e})}\left|\braket{\psi}{\phi}\right|^2
+\end{align}
+which gives us, assuming normalized state $\ket{e}$,
+\begin{align}
+    \left|\braket{\psi}{\phi}\right| = \left|\braket{\psi}{\phi}\right|^2.
+\end{align}
+
+This means that our unitary only for the same or orthogonal states, which contradicts our initial presumption that our unitary works for arbitrary states. So, we no that no such operator exists, proving the no-cloning theorem.
+
+\subsection{Deutsch-Josza Algorithm}
+The Deutsch-Josza algorithm is a simple demenstration of quantum speed-up. It allows us to determine whether a function is constant or variable. We refer to the description in the book \textit{Introduction to Quantum Computing} by Phillip Kaye and Raymond Laflamme (posted on course page).
+
+\subsection{Superdense Coding}\label{superdense}
+Let's say Alice (A) and Bob (B) share an entangled pair:
+\begin{align}
+    \ket{\beta_{00}}=\frac{\ket{00}+\ket{11}}{\sqrt{2}}.
+    \label{beta00}
+\end{align}
+We can created this entagled state by taking starting their qubits in the $\ket{0}$ state, applying a Hadamard $H$ on Alice's qubit, and finally applying a CNOT with Alice's qubit has the control.
+
+Now, we ask: how does Alice transmit certain sets of information? Well, we must encode our possible bits:
+\begin{table}[!htbp]
+    \centering
+    \begin{tabular}{c|c c}
+        message & transformation & result\\\hline
+        00 & $\mathbb{I}_A\otimes\mathbb{I}_B$ & $\frac{\ket{00}+\ket{11}}{\sqrt{2}}=\ket{\beta_{00}}$\\
+        00 & $X_A\otimes\mathbb{I}_B$ & $\frac{\ket{10}+\ket{01}}{\sqrt{2}}=\ket{\beta_{01}}$\\
+        10 & $Z_A\otimes\mathbb{I}_B$ & $\frac{\ket{00}-\ket{11}}{\sqrt{2}}=\ket{\beta_{10}}$\\
+        11 & $X_A,Z_A\otimes\mathbb{I}_B$ & $\frac{\ket{10}-\ket{01}}{\sqrt{2}}=\ket{\beta_{11}}$\\
+    \end{tabular}
+\end{table}
+In short, Alice performs certain operations on her qubit to encode a two-bit value before sending her qubit to Bob. Bob then makes a ``Bell measurement". A ``Bell measurement" simply unentangles an entagled state. Namely, he applies a CNOT with Alice's qubit as the control and then applies a Hadamard on Alice's qubit before measuring. Working this out, we will find that Bob will simply measure Alice's original two-bit states.
+
+\subsection{Quantum Teleportation}
+While this subject is rather over-hyped, it is indeed true that quantum mechanics can lead to a certain kind of state teleportation. First, let's again begin with our friends Alice and Bob. Say they share the entangled state from Eq. \ref{beta00}, $\ket{\beta_{00}}$. Now, Alice wants to teleport a separate state $\ket{\psi}=\alpha\ket{0}+\beta\ket{1}$. The full system state is then:
+\begin{align}
+    \ket{\psi}\otimes\ket{\beta_{00}} =&\left(\alpha\ket{0}+\beta\ket{1}\right)\otimes\frac{\ket{00}+\ket{11}}{\sqrt{2}}\\
+    =&\frac{1}{2\sqrt{2}}(\ket{00}+\ket{11})_A\otimes\left(\alpha\ket{0}+\beta\ket{1}\right)_B\nonumber\\
+    &+\frac{1}{2\sqrt{2}}(\ket{01}+\ket{10})_A\otimes\left(\alpha\ket{0}+\beta\ket{1}\right)_B\nonumber\\
+    &+\frac{1}{2\sqrt{2}}(\ket{00}-\ket{11})_A\otimes\left(\alpha\ket{0}-\beta\ket{1}\right)_B\nonumber\\
+    &+\frac{1}{2\sqrt{2}}(\ket{01}-\ket{10})_A\otimes\left(\alpha\ket{0}-\beta\ket{1}\right)_B.
+\end{align}
+
+Now, Alice applies a CNOT with her state $\ket{\psi}$ as the control and her qubit of the entangled pair as the target and then performs a Hadamard on the state $\ket{\psi}$. This is just the Bell measurement from Section \ref{superdense}. This means that Alice's qubit is now encoded into a two-bit value which can then be used to perform operations on Bob's half of the entagled pair. After the CNOT, we find:
+\begin{align}
+    U_{CNOT}\ket{\psi}\otimes\ket{\beta_{00}} 
+    =&\frac{1}{2\sqrt{2}}(\ket{00}+\ket{10})_A\otimes\left(\alpha\ket{0}+\beta\ket{1}\right)_B\nonumber\\
+    &+\frac{1}{2\sqrt{2}}(\ket{01}+\ket{11})_A\otimes\left(\alpha\ket{1}+\beta\ket{0}\right)_B\nonumber\\
+    &+\frac{1}{2\sqrt{2}}(\ket{00}-\ket{10})_A\otimes\left(\alpha\ket{0}-\beta\ket{1}\right)_B\nonumber\\
+    &+\frac{1}{2\sqrt{2}}(\ket{01}-\ket{11})_A\otimes\left(\alpha\ket{1}-\beta\ket{0}\right)_B
+\end{align}
+Now performing the Hadamard and measuring Alice's two qubits (her $\ket{\psi}$ and entangled qubit), we know which state Bob holds based on the measurement of Alice's qubits. Namely, she measures 00, 01, 10, 11 based on the Bell measurement we discussed above. This measurement then collapses Bob's state to $\alpha\ket{0}+\beta\ket{1}$, $\alpha\ket{1}+\beta\ket{0}$, $\alpha\ket{0}-\beta\ket{1}$, or $\alpha\ket{1}-\beta\ket{0}$, respectively. As such, we can use Alice's measurement to perform transformations on Bob's qubit such that Bob ends with the original state $\ket{\psi}=\alpha\ket{0}+\beta\ket{1}$. Specifically, we would apply an X operation if Alice's first bit is 1 and a Z operation if Alice's second bit is 1
+
+\subsection{Universality}
+A universal computer can solve any problem. The universal set of gates includes the Clifford gates: \{CNOT, H, S\} plus the T gate where
+\begin{align}
+    S =
+    \begin{pmatrix}
+        1 & 0\\
+        0 & -i
+    \end{pmatrix}
+\end{align}
+and
+\begin{align}
+    T =
+    \begin{pmatrix}
+        1 & 0\\
+        0 & e^{-i\pi/4}
+    \end{pmatrix}.
+\end{align}
+
+\section{Quantum Algorithms}
+\subsection{Grover's Algorithm}
+\subsubsection{Background}
+Grover's algorithm was proposed by Lou Grover in 1995. The problem statement is: given a search space of size N, find an element which statisfies a known property. Classically, this problem scales as O(N), but Grover's algorithm scales as O($\sqrt{\textrm{N}}$.
+
+\subsubsection{Procedure}
+We are given a list of N items, and we wish to identity a winner $w$. In our quantum algorithm, we create an oracle, which is a unitary matrix that performs a certain function. The input to this oracle is a superposition. It allows us to achieve quantum speed-up because it acts not on a single basis state, but some superposition.
+
+We represent numbers in binary in the classical way where 000 represents 0 up to 111 which represents 7, giving us eight basis states using three qubits. The oracle $U_f$ we choose acts on a state such that
+\begin{align}
+    U_f\ket{x} =& (-1)^{f(x)}\ket{x}.
+\end{align}
+where
+\begin{align}
+    f(x)= 
+    \begin{cases}
+        1, & \text{if } x = w\\
+        0, & \text{if } x \neq w
+    \end{cases}
+\end{align}
+We then make a superposition state
+\begin{align}
+    \ket{s} = \frac{1}{\sqrt{N}}\sum^{N-1}_{x=0}\ket{x}.
+\end{align}
+
+This means that the oracle amplifies the amplitude of the state what corresponds to our ``winner" state $w$. Using the correct number of applications of the oracle, we should be able to collapse onto $w$ with near certainty (prob = 1).
+
+
+How, though, do we implement this algorithm? First, we need to create the superposition state $\ket{s}$. To do so, we perform H gates on each qubit in our system. For example, with two qubits initialized in $\ket{0}$,
+\begin{align}
+    H\otimes H\ket{00} &= \frac{\ket{0}+\ket{1}}{\sqrt{2}}\otimes\frac{\ket{0}+\ket{1}}{\sqrt{2}}\nonumber\\
+    &= \frac{1}{2}(\ket{00}+\ket{01}+\ket{10}+\ket{11})\\
+    &= \ket{s}.\nonumber
+\end{align}
+Let's call our winning state $\ket{w}= \ket{10}$. Our winning state, is then clearly not perpendicular to $\ket{s}$. However, we can define an $\ket{s'}$ such that
+\begin{align}
+    \ket{s'}=\ket{s}-\textbf{proj}_{\ket{s}}\ket{w}
+\end{align}
+and a unitary matrix $U_s$
+\begin{align}
+    U_s=2\ket{s}\bra{s}-\mathbb{I}.
+\end{align}
+
+We begin the algorithm with our initialization which we described before. We apply Hadamards on each state which begins in state $\ket{0}$:
+\begin{align}
+    \ket{\psi_0}=\ket{s}=H^{\otimes n}\ket{0}^n.
+\end{align}
+Next, we apply the oracle. Beginning with our state $\ket{\psi_0}$, performing $U_f\ket{\psi_0}$ reverses (adds a phase of -1) on $\ket{w}$. In geometric terms, this is a rotation around the state $\ket{s'}$. Following this comes amplitude amplification---the real meat of the algorithm.
+
+We apply our previously defined $U_s$ so that we have state $\ket{\psi_1} = U_sU_f\ket{\psi_0}$. This action rotates our state around the original $\ket{s}$ and amplifies the amplitude of our winning state. By continuing to apply the combination of $U_sU_f$, we are able to continue to rotate our system state $\ket{\psi}$ closer and closer to $\ket{w}$.
+
+For a full explanation, we refer to the discussion in ``Quantum Computation and Quantum Information" by Nielson and Chuang as well as the \href{https://quantumexperience.ng.bluemix.net/proxy/tutorial/full-user-guide/004-Quantum_Algorithms/070-Grover's_Algorithm.html}{IBM Experience tutorial}.
+
+\end{document}

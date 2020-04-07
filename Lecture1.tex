@@ -1,0 +1,235 @@
+\documentclass[11pt]{article} % Font size (can be 10pt, 11pt or 12pt) and paper size (remove a4paper for US letter paper)
+
+\usepackage{amsmath,amssymb,amsthm,gensymb}
+
+\usepackage{geometry}
+\usepackage{wrapfig}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage[protrusion=true,expansion=true]{microtype} % Better typography
+\usepackage{hyperref}
+\usepackage{graphicx} % Required for including pictures
+\usepackage{wrapfig} % Allows in-line images
+\linespread{1.12}
+\usepackage{mathtools}
+\usepackage[font=footnotesize,labelfont=bf]{caption}
+\usepackage[T1]{fontenc} % Required for accented characters
+
+\makeatletter
+
+\newcommand{\bra}[1]{\left\langle #1 \right|}
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\braket}[2]{\left\langle#1 |  #2\right\rangle}
+\makeatother
+
+%\addbibresource{bibliography.bib}
+
+
+\author{Amir Karamlou\footnote{Notes LaTeXed by Megan Yamoah for 6.s089 IAP 2019.}\\\href{mailto:karamlou@mit.edu}{karamlou@mit.edu}}
+\title{Introduction to Quantum Computing\\Lecture 1: Introduction to Quantum Mechanics I}
+\date{Massachusetts Institute of Technology\\6.s089 IAP 2020}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+
+\section{Introduction}
+\subsection{6.s089 Overview}
+This course, taught during the MIT January term over 11 classes of two hours each, aims to serve as a general introduction to the field of quantum computing. It is tailored to the motivated underclass undergraduate and assumes no background in either quantum mechanics or classical computing theory, though it is built on many of the simpler concepts in linear algebra. As such, the course begins with a general introduction to quantum mechanics, followed by a study of the formalism used in the quantum computing field. Then, we will cover fundamental quantum algorithms and their applications before diving into more complex topics such as quantum machine learning and the operational methods of currently researched quantum computing architectures.
+
+These notes cover all topics presented in the lectures and cite applicable references in the field for the interested reader. By no means are they a fully comprehensive introduction to quantum computing, but they should, at minimum, lay a foundation for further investigation into the topic.
+
+\subsection{Introduction to Quantum Mechanics}
+
+Quantum mechanics is, in short, the theory which describes the workings of the entire universe but which only manifests itself in certain regimes where ``classical" effects do not take over (namely at small lengths, low temperatures, low energies, high pressures, etc.). It presents various un-intuitive ideas as demonstrated by the Heisenberg Uncertainty Principle and Schr\"odinger's cat. Yet, it describes with perfect accuracy numerous phenomena we experimentally observe at the microscopic level. Add to this the fact that we have yet to fully prove quantum mechanics, and one seriously doubts our current knowledge of the universe.
+
+Clearly, quantum mechanics is not a trivial subject. But, we will cover the bare minimum of what one needs to know in order to understanding quantum computing theory and algorithms. As such, our treatment will gloss over some details and mathematical background. 
+
+We progress by covering some basic linear algebra before introducing the prevailing notation and formalism used in the field. It is important to note that the formalism of quantum mechanics is built on that of linear (and, more fundamentally, Lie) algebra(s). After the mathematics introduction, we will then discuss the six postulates of quantum mechanics in order to gain a more thorough understanding of quantum mechanics before moving on to topics more specific to quantum computing.
+
+\section{Dirac Notation}
+It is now useful to introduce a notation formalism used in quantum mechanics and, especially, in quantum computing: Dirac ``bra-ket" notation. While it may at first look odd, it is in reality a simple translation of the ``wordier" vector notations used in linear algebra.
+
+Namely, we introduce two definitions: the ``bra" and the ``ket". Together, when we take an inner product (Section \ref{inner_prod}), they form a ``bra-ket" or bracket.\footnote{Physicists are really quite banal when coming to naming anything. So much so that we are often mistaken to be clever.}
+
+The ket, written as $\ket{\psi}$, where $\psi$ is an arbitrary variable used to label the ket, represents a column vector of arbitrary length. Again, in quantum computing, since we only concern ourselves with individual systems of two states, this becomes a 2-by-1 column vector. The bra, $\bra{\psi}$ then represents the conjugate transpose of the corresponding bra. So, for our purposes, the bra is a 1-by-2 row vector. More concretely, for a ket $\ket{\psi}$ such that
+\begin{align}
+    \ket{\psi} = 
+    \begin{pmatrix}
+        \alpha \\
+        \beta \\
+    \end{pmatrix},
+    \textrm{ the bra }
+    \bra{\psi} = 
+    \begin{pmatrix}
+        \alpha^\ast & \beta^\ast
+    \end{pmatrix}. \nonumber
+\end{align}
+
+For a qubit, we'll define the ground and excited states with $\ket{0}$ and $\ket{1}$, respectively, as
+\begin{align}
+    \ket{0} = 
+    \begin{pmatrix}
+        1 \\
+        0 \\
+    \end{pmatrix}
+    \textrm{ and }
+    \ket{1} = 
+    \begin{pmatrix}
+        0 \\
+        1 \\
+    \end{pmatrix} \nonumber
+\end{align}
+
+\noindent which are the real basis vectors of $\mathbb{C}^2$. The full quantum state of one qubit will then be a linear, complex superposition of these two basis vectors which are, by definition, normalized (magnitude one) and orthogonal (inner product zero). An arbitrary qubit state $\ket{\phi} = \alpha\ket{0} + \beta\ket{1}$ for $\alpha,\,\beta \in \mathbb{C}$. The state has corresponding bra $\bra{\phi} = \alpha^\ast\bra{0} + \beta^\ast\bra{1}$. We also impose the restriction $\left|\alpha\right|^2 + \left|\beta\right|^2 = 1$ to normalize the state for reasons to be discussed later in the course.
+
+\section{Linear Algebra in QM}
+\subsection{Inner Product} \label{inner_prod}
+When applying linear algebra to quantum mechanics there are a few concepts to operations and concepts to highlight. First is that of the inner product, which is a generalization of the dot product. For vectors like kets an bras, it is in fact just the dot product. But, it is useful to take a closer look using Dirac notation.
+
+Dirac notation actually makes the inner product quite straight-forward. Let's look at a state $\ket{\psi}$ with complex entries. To take the inner product of $\ket{\psi}$ with itself in order to find the magnitude of $\ket{\psi}$, we simply multiply $\ket{\psi}$ with it's conjugate transpose, which is exactly $\bra{\psi}$. So, the inner product of $\ket{\psi}$ with itself is $\braket{\psi}{\psi}$. For a normalized state, namely for a state where we impose the condition that the square magnitudes of its coefficients on basis states sum to one: $\sum^\textrm{n}_{i=1}\left|\alpha_i\right|^2=1$, the inner product will also be one. To see this, we decompose the inner product of $\ket{\psi}$ with itself.
+
+Taking $\ket{\psi}$ to be in $\mathbb{C}^\textrm{n}$, we can represent $\ket{\psi}$ as a complex superposition of the basis vectors of $\mathbb{C}^\textrm{n}$:
+\begin{align}
+    \ket{\psi} = \sum^\textrm{n}_{i=1}\alpha_i\ket{e_i} \nonumber
+\end{align}
+
+\noindent for $\alpha \in \mathbb{C}$. Now taking the inner product against itself, we find
+\begin{align}
+    \braket{\psi}{\psi} &= \sum^\textrm{n}_{i,j=1}\alpha_j^\ast\alpha_i\braket{e_j}{e_i}\nonumber\\
+    &= \sum^\textrm{n}_{i,j=1}\alpha_j^\ast\alpha_i\delta_{i,j}\nonumber\\
+    &= \sum^\textrm{n}_{i=1}\alpha_i^\ast\alpha_i\nonumber\\
+    &= \sum^\textrm{n}_{i=1}\left|\alpha_i\right|^2 = 1\nonumber
+\end{align}
+
+What about the inner product of two different states, say, $\ket{\psi}$ and $\ket{\phi}$? Well, since the inner product is again defined such that we take the complex transpose of one of the states, we have, for the inner product of $\ket{\psi}$ and $\ket{\phi}$, $\braket{\psi}{\phi} = \braket{\phi}{\psi}$. Defining $\ket{\phi} = \sum^\textrm{n}_{i=1}\beta_i\ket{e_i}$, we'd have $\braket{\phi}{\psi} = \sum^\textrm{n}_{i=1}\beta_i^\ast\alpha_i$. For normalized states, this value ranges from 0 to 1 (Can you show it?) and represents the ``overlap" between the two states.
+
+The inner product is a very important concept in quantum mechanics and quantum computing, so it is worth getting comfortable with it using Dirac notation.
+
+
+\subsection{Operators} \label{operators}
+Next, we consider quantum operators. Simply put, operators act on state vectors and are represented by matrices in the corresponding n-dimensional complex space. Some are defined in infinite dimensional space and must be truncated for finite dimensions. These operators become the classical analog of ``gates" in a quantum algorithm.
+
+Quantum operators are represented as a variable (often capital) with a hat, eg. \textbf{\^{H}}, \textbf{\^{x}}, or \textbf{\^{a}}, and, in technical terms, are defined as mapping one vector space $V$ to another $W$. For a quantum operator \textbf{\^{A}}, $\textbf{\^{A}}: V \rightarrow W$. They have (but are not limited to) the following properties:
+
+\begin{enumerate}
+    \item linearity
+        \begin{itemize}
+            \item For quantum operator \textbf{\^{A}} in $V \in \mathbb{C}^\textrm{n}$, $\textbf{\^{A}}\sum^n_i \ket{e_i} = \sum^n_i \textbf{\^{A}}\ket{e_i}$.
+        \end{itemize}
+    \item composites
+        \begin{itemize}
+            \item For quantum operators \textbf{\^{A}}, \textbf{\^{B}} in $V \in \mathbb{C}^\textrm{n}$, $(\textbf{\^{A}\^{B}}) \ket{\psi} = \textbf{\^{A}(\^{B}} \ket{\psi})$
+        \end{itemize}
+    \item commutation
+        \begin{itemize}
+            \item ``Order matters"
+            \item For quantum operators \textbf{\^{A}}, \textbf{\^{B}} in $V \in \mathbb{C}^\textrm{n}$, $\textbf{\^{A}\^{B}}\ket{\psi} \neq \textbf{\^{B}\^{A}} \ket{\psi}$
+            \item In fact, we have the idea of the commutator: The commutator of \textbf{\^{A}} and \textbf{\^{B}} is $[\textbf{\^{A}},\textbf{\^{B}}] = \textbf{\^{A}\^{B}} - \textbf{\^{B}\^{A}}$ and their anti-commutator is $\{\textbf{\^{A}},\textbf{\^{B}}\} = \textbf{\^{A}\^{B}} + \textbf{\^{B}\^{A}}$.
+            \item We say that two operators commute if their commutator is zero.
+        \end{itemize}
+\end{enumerate}
+
+We have special names for operators with distinct properties. Namely, we call an operator with the property $\hat{\textbf{A}}^\dagger = \hat{\textbf{A}}$ \textbf{hermitian} and an operator with the property $\hat{\textbf{A}}^\dagger\hat{\textbf{A}} = \hat{\textbf{A}}\hat{\textbf{A}}^\dagger = \mathbb{I} \equiv \hat{\textbf{A}}^\dagger = \hat{\textbf{A}}^{-1}$ \textbf{unitary}. Unitary operations are ``reversible" since action on a state with $\hat{\textbf{A}}^\dagger$ will undo the action of \textbf{\^{A}}. Both hermitian and unitary operators are significant for quantum mechanics. We will discuss this in more detail in Section \ref{pos}.
+
+Some important operators in quantum computing are 
+
+\noindent identity:
+$\mathbb{I} = 
+    \begin{pmatrix}
+        1 & 0 \\
+        0 & 1 \\
+    \end{pmatrix}\nonumber$
+    
+\noindent the Pauli matrices: 
+$\sigma_x = 
+    \begin{pmatrix}
+        0 & 1 \\
+        1 & 0 \\
+    \end{pmatrix}\;
+    \sigma_y = 
+    \begin{pmatrix}
+        0 & -i \\
+        i & 0 \\
+    \end{pmatrix}\;
+    \sigma_z = 
+    \begin{pmatrix}
+        1 & 0 \\
+        0 & -1 \\
+    \end{pmatrix}$
+    
+\noindent and the Hadamard:
+$\hat{H} = \frac{1}{\sqrt{2}}
+    \begin{pmatrix}
+        1 & 1 \\
+        1 & -1 \\
+    \end{pmatrix}$.
+    
+\noindent We will discuss all of these operators and their function in more detail in future lectures.
+    
+\subsection{Tensor Product}
+The tensor product is an important tool for thinking of multiple quantum systems. A single qubit, which, again, is a two-state system, will exist in a complex vector space, called a Hilbert space $\mathcal{H}_A$. If we introduce another qubit into our quantum computer, it will exist in its own Hilbert space $\mathcal{H}_B$. How then, do we talk about these two qubit together?
+
+Well, with a tensor product. Our full quantum computer system is now the tensor product of the two Hilbert spaces, namely $\mathcal{H}_A \otimes \mathcal{H}_B$. The state of each qubit will exist only in its relevant Hilbert space and an operator in $\mathcal{H}_A$ will only act on a state in $\mathcal{H}_A$ and vice versa. If qubit A is in state $\ket{\psi}$ and qubit B is in state $\ket{\phi}$, then our two-qubit computer is in state $\ket{\psi}_A \otimes \ket{\phi}_B$. Of course, this is generalizable to infinite numbers of qubits, or tensored Hilbert spaces.
+
+The tensor product carries a few properties:
+
+\begin{enumerate}
+    \item For $c \in \mathbb{C}$, $c\left(\ket{\psi}_A \otimes \ket{\phi}_B\right) = c\ket{\psi}_A \otimes \ket{\phi}_B = \ket{\psi}_A \otimes c\ket{\phi}_B$
+    \item Distribution: $\left(\ket{\psi_1}_A + \ket{\psi_2}_A\right)\otimes \ket{\phi}_B = \ket{\psi_1}_A \otimes \ket{\phi}_B + + \ket{\psi_2}_A \otimes \ket{\phi}_B$
+    \item Operators act in their own spaces: $\textrm{\^A}_A \otimes \textrm{\^B}_B\left(\ket{\psi}_A \otimes \ket{\phi}_B\right) = \textrm{\^A}_A\ket{\psi}_A \otimes \textrm{\^B}_B\ket{\phi}_B$
+\end{enumerate}
+
+\noindent We also make a notation simplification:
+\begin{align}
+    \ket{\psi}_A \otimes \ket{\phi}_B = \ket{\psi}\ket{\phi} = \ket{\psi,\,\phi} = \ket{\psi\phi} \nonumber
+\end{align}
+
+\noindent The tensor product acts as following on vectors and matrices:
+\begin{align}
+    \begin{pmatrix}
+        \alpha\\
+        \beta
+    \end{pmatrix} \otimes
+    \begin{pmatrix}
+        \gamma\\
+        \delta
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        \alpha\gamma\\
+        \alpha\delta\\
+        \beta\gamma\\
+        \beta\delta
+    \end{pmatrix} \nonumber
+\end{align}
+\noindent For an n$\times$m matrix \textbf{A} and p$\times$q matrix \textbf{B}:
+\begin{align}
+    \textbf{A} \otimes \textbf{B} = 
+    \begin{pmatrix}
+        \textrm{A}_{11}\textbf{B} & \textrm{A}_{12}\textbf{B} & \hdots & \textrm{A}_{1\textrm{n}}\textbf{B}\\
+        \textrm{A}_{21}\textbf{B} & \textrm{A}_{22}\textbf{B} & \hdots & \textrm{A}_{2\textrm{n}}\textbf{B}\\
+        \vdots \\
+        \textrm{A}_{\textrm{n}1}\textbf{B} & \textrm{A}_{\textrm{n}2}\textbf{B} & \hdots & \textrm{A}_{\textrm{n}\textrm{n}}\textbf{B}\\
+    \end{pmatrix}\nonumber
+\end{align}
+
+We call two-qubit states that can be written as the tensor product of two states \textbf{product states} and those that cannot \textbf{entangled states}. For example,
+\begin{align}
+    \ket{\psi} = \frac{1}{2}\left(\ket{00} + \ket{10} - \ket{01} - \ket{11}\right) = \frac{\ket{0} + \ket{1}}{\sqrt{2}} \otimes \frac{\ket{0} - \ket{1}}{\sqrt{2}}
+\end{align}
+is a product state while
+\begin{align}
+    \ket{\Psi^+} = \frac{\ket{00} + \ket{11}}{\sqrt{2}}
+\end{align}
+is not.
+
+
+\end{document}

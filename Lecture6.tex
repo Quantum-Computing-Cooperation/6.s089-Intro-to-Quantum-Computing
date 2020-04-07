@@ -1,0 +1,94 @@
+\documentclass[11pt]{article} % Font size (can be 10pt, 11pt or 12pt) and paper size (remove a4paper for US letter paper)
+
+\usepackage{amsmath,amssymb,amsthm,gensymb}
+
+\usepackage{geometry}
+\usepackage{wrapfig}
+\usepackage{hyperref}
+\usepackage{makecell}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage[protrusion=true,expansion=true]{microtype} % Better typography
+\usepackage{hyperref}
+\usepackage{graphicx} % Required for including pictures
+\usepackage{wrapfig} % Allows in-line images
+\linespread{1.12}
+\usepackage{mathtools}
+\usepackage[font=footnotesize,labelfont=bf]{caption}
+\usepackage[T1]{fontenc} % Required for accented characters
+
+\makeatletter
+
+\newcommand{\bra}[1]{\left\langle #1 \right|}
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\braket}[2]{\left\langle#1 |  #2\right\rangle}
+\makeatother
+
+%\addbibresource{bibliography.bib}
+
+
+\author{Francisca Vasconcelos\footnote{6.s089 2020 lecture given by Amir Karamlou. Notes LaTeXed by Grecia Castelazo for 6.s089 IAP 2020.}\\\href{mailto:francisc@mit.edu} {francisc@mit.edu}}
+\title{Introduction to Quantum Computing\\Lecture 6: QFT and Phase Estimation}
+\date{Massachusetts Institute of Technology\\6.s089 IAP 2020}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Quantum Fourier Transform}
+\subsection{Preliminaries}
+Let's define the action of the Hadamard gate on $\ket{x}$ for $x \in \{0,1\}$
+\begin{align}
+    H\ket{x}=\frac{1}{\sqrt{2}}(\ket{0}+(-1)^x\ket{1}).
+\end{align}
+or equivalently,
+\begin{align}
+    H\ket{x}=\frac{1}{\sqrt{2}}\sum_{y \in \{0,1\}}(-1)^{xy}\ket{y}
+\end{align}
+Let $\ket{x}$ be a state made of $n$ qubits, $\ket{x}=\ket{x_1 x_2 \ldots x_n}$, then the action of the Hadamard applied on all $n$ qubits is represented as
+
+\begin{align}
+    H^{\otimes n}\ket{x}=\frac{1}{2^{n/2}}\sum_{y \in \{0,1\}^n}(-1)^{x.y}\ket{y}.
+\end{align}
+
+\subsection{Fourier Transform}
+A very useful mathematical tool in sciences and engineering is the Fourier Transform, it may simplify problems by transforming mathematical functions from one domain to another. We can transform the problem between coefficients and sample representations using the Fast Fourier Transform (FFT) on the order of $O(N\log{N})$.
+
+\begin{table}[!htbp]
+    \centering
+    \begin{tabular}{c|c c}
+        operation & coefficients & samples\\\hline
+        evaluation & $O(N)$ & $O(N^2)$\\
+        addition & $O(N)$ & $O(N)$\\
+        multiplication & $O(N^2)$ & $O(N)$\\
+    \end{tabular}
+    \caption{Example of operations with polynomials}
+\label{table:table1}
+\end{table}
+The {\bf discrete Fourier transform} takes in a vector $x$ of length $N$ $x_0 x_1 \ldots x_{N-1}$ and maps it into another vector $y$ of length $N$, as in Eq.\ref{eq:eq1} 
+\begin{equation}
+ y_k=\frac{1}{N}\sum_{j=0}^{N-1}x_j e^{2\pi ijk/N}.
+\label{eq:eq1}   
+\end{equation}
+
+The {\bf quantum Fourier transform} (QFT) is defined as linear operator and acts on an orthonormal basis $\ket{0}\ldots \ket{N-1}$ as follows 
+\begin{equation}
+    \ket{j} \rightarrow \frac{1}{\sqrt{N}}\sum_{j=0}^{N-1} e^{2\pi ijk/N}\ket{k} \Rightarrow \sum_{j=0}^{N-1}x_j\ket{j} \rightarrow \sum_{k=0}^{N-1} y_k\ket{k}.
+\end{equation}
+The QFT can also be thought as the following unitary operator
+\begin{equation}
+    U_{QFT}= \frac{1}{\sqrt{N}}\sum_{j,k}^{N}e^{2\pi ijk/N}\ket{k}\bra{j}.
+\end{equation}
+For the general state 
+$$\ket{j_1,j_2,\ldots j_n} \rightarrow \frac{(\ket{0}+e^{2\pi i0.j_n}\ket{1})(\ket{0}+e^{2\pi i0.j_{n-1}j_n}\ket{1})\ldots(\ket{0}+e^{2\pi i0.j_1 j_2 \ldots j_n\ket{1}})}{2^{n/2}},$$ where $0.j_1 j_2 \ldots j_n=\frac{j_1}{2}+\frac{j_2}{4}+\ldots \frac{j_n}{2^n}.$
+
+\section{Simon's Algorithm}
+
+\end{document}
